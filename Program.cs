@@ -48,11 +48,17 @@ namespace PrimeGenerator
             3557, 3559, 3571 
         };
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="n"></param>
+        /// <param name="k"></param>
+        /// <returns></returns>
         public static Boolean IsProbablyPrime(this BigInteger n, int k = 10)
         {
             var r = 0;
             var d = n - 1;
-            while (d % 2 == 0) // Factor out the 2's
+            while (d % 2 == 0) // Factor out the possible 2's
             {
                 d /= 2;
                 r++;
@@ -99,13 +105,11 @@ namespace PrimeGenerator
         private int _count;
         private int _bytes;
         private RandomNumberGenerator _rng;
-        private int _primeCount;
 
         public PrimeGen(int bits, int count)
         {
             _bytes = bits / 8;
             _count = count;
-            _primeCount = 0;
             _rng = RandomNumberGenerator.Create();
             Console.WriteLine("BitLength: {0} bits", bits);
         }
@@ -133,7 +137,7 @@ namespace PrimeGenerator
                 _rng.GetBytes(myBytes);
                 x = BigInteger.Abs(new BigInteger(myBytes));
 
-                foreach (var prime in Helpers.FirstHPrimes)
+                foreach (var prime in Helpers.First5HPrimes)
                 {
                     if (x % prime == 0)
                     {
