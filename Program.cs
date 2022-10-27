@@ -1,13 +1,19 @@
 ﻿using System.Diagnostics;
-using System.Dynamic;
 using System.Numerics;
 using System.Security.Cryptography;
 
 namespace PrimeGenerator
 {
+    /// <summary>
+    /// A set of helper functions and reference variables
+    /// </summary>
     public static class Helpers
     {
 
+        /// <summary>
+        /// The first 100 prime numbers as defined in <a href="https://en.wikipedia.org/wiki/List_of_prime_numbers">
+        /// Primes List</a>.
+        /// </summary>
         public static readonly int[] FirstHPrimes =
         {
             2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103,
@@ -16,7 +22,11 @@ namespace PrimeGenerator
             349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463,
             467, 479, 487, 491, 499, 503, 509, 521, 523, 541
         };
-
+        
+        /// <summary>
+        /// The first 500 prime numbers as defined in <a href="https://en.wikipedia.org/wiki/List_of_prime_numbers">
+        /// Primes List</a>.
+        /// </summary>
         public static readonly int[] First5HPrimes =
         { 
             2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 
@@ -49,11 +59,14 @@ namespace PrimeGenerator
         };
 
         /// <summary>
-        /// 
+        /// Uses the Miller-Rabin algorithm to test if an integer is prime or not. This also uses the BigInteger.ModPow
+        /// function as it allows us to do a bit of mathematical optimization during the algorithm.
         /// </summary>
-        /// <param name="n"></param>
-        /// <param name="k"></param>
-        /// <returns></returns>
+        /// <param name="n">The number we are testing</param>
+        /// <param name="k">The number of rounds we are trying to perform (or witnesses)</param>
+        /// <returns>False if the number is definitely composite, True otherwise (Note: This returns False if the
+        /// algorithm found a composite factor in k witnesses, it is theoretically possible a factor slips through
+        /// though it is mathematically improbable)</returns>
         public static Boolean IsProbablyPrime(this BigInteger n, int k = 10)
         {
             var r = 0;
@@ -100,32 +113,51 @@ namespace PrimeGenerator
         }
     }
 
+    /// <summary>
+    /// A class that generates a set of prime numbers that are <see cref="RandomNumberGenerator.GetBytes(byte[])">
+    /// cryptographically strong</see>.
+    /// </summary>
     public class PrimeGen
     {
         private int _count;
         private int _bytes;
         private RandomNumberGenerator _rng;
 
-        public PrimeGen(int bits, int count)
+        /// <summary>
+        /// Sets up the <see cref="RandomNumberGenerator">generator</see> to be used by <see cref="GeneratePrimes"/>.
+        /// </summary>
+        public PrimeGen()
         {
-            _bytes = bits / 8;
-            _count = count;
             _rng = RandomNumberGenerator.Create();
-            Console.WriteLine("BitLength: {0} bits", bits);
         }
 
-        public void GeneratePrimes()
+        /// <summary>
+        /// Generates a number of primes and outputs the numbers as they are generated. The total time it took to
+        /// generate is also printed. 
+        /// </summary>
+        /// <param name="bits">The size (in bits) of the numbers to generate (usually). This might not be exact due to
+        /// the possibility that the <see cref="RandomNumberGenerator.GetBytes(byte[])">generation process</see>
+        /// could produce leading 0's</param>
+        /// <param name="count">The number of primes to generate</param>
+        public void GeneratePrimes(int bits, int count)
         {
+            
+            Console.WriteLine("BitLength: {0} bits", bits);
+
             Stopwatch stopwatch = Stopwatch.StartNew();
-            for (var i = 0; i < _count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var prime = GeneratePrime();
                 Console.WriteLine("{0}: {1}", i + 1, prime);
             }
             stopwatch.Stop();
-            Console.WriteLine(stopwatch.Elapsed);
+            Console.WriteLine("Time to Generate: {0}", stopwatch.Elapsed);
         }
 
+        /// <summary>
+        /// Generates 1 prime using many threads (Private Method)
+        /// </summary>
+        /// <returns>A number that is probably prime as defined <see cref="Helpers.IsProbablyPrime"/></returns>
         private BigInteger GeneratePrime()
         {
             BigInteger result = 0;
@@ -165,6 +197,29 @@ namespace PrimeGenerator
                               "\t- count - the number of prime numbers to generate, defaults to 1");
         }
         
+        /// <summary>
+        /// A program that parses the arguments that were passed in and generates a number of primes, by default 1, of a
+        /// provided size. The arguments are defined in <see cref="HelpMsg"/>>.The program has 3 defined exit codes:
+        /// <list type="table">
+        ///     <listheader>
+        ///         <term>Exit Code</term>
+        ///         <description>Meaning</description>
+        ///     </listheader>
+        ///     <item>
+        ///         <term>0</term>
+        ///         <description>Success</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>1</term>
+        ///         <description>Incorrect number of args provided</description>
+        ///     </item>
+        ///     <item>
+        ///         <term>2</term>
+        ///         <description>The provided argument(s) were not integers</description>
+        ///     </item>
+        /// </list>
+        /// </summary>
+        /// <param name="args">Arguments as they are defined in <see cref="HelpMsg"/></param>
         public static void Main(string[] args)
         {
             if (args.Length < 1)
@@ -185,9 +240,8 @@ namespace PrimeGenerator
                 HelpMsg();
                 Environment.Exit(2);
             }
-            var gen = new PrimeGen(bits, count);
-
-            gen.GeneratePrimes();
+            
+            new PrimeGen().GeneratePrimes(bits, count);
             
         }
     }
