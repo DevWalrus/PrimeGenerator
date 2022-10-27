@@ -119,8 +119,6 @@ namespace PrimeGenerator
     /// </summary>
     public class PrimeGen
     {
-        private int _count;
-        private int _bytes;
         private RandomNumberGenerator _rng;
 
         /// <summary>
@@ -147,7 +145,7 @@ namespace PrimeGenerator
             Stopwatch stopwatch = Stopwatch.StartNew();
             for (var i = 0; i < count; i++)
             {
-                var prime = GeneratePrime();
+                var prime = GeneratePrime(bits/8);
                 Console.WriteLine("{0}: {1}", i + 1, prime);
             }
             stopwatch.Stop();
@@ -157,15 +155,18 @@ namespace PrimeGenerator
         /// <summary>
         /// Generates 1 prime using many threads (Private Method)
         /// </summary>
+        /// <param name="bytes">The size (in bytes) of the numbers to generate (usually). This might not be exact due to
+        /// the possibility that the <see cref="RandomNumberGenerator.GetBytes(byte[])">generation process</see>
+        /// could produce leading 0's</param>
         /// <returns>A number that is probably prime as defined <see cref="Helpers.IsProbablyPrime"/></returns>
-        private BigInteger GeneratePrime()
+        private BigInteger GeneratePrime(int bytes)
         {
             BigInteger result = 0;
             Parallel.For(0, Int64.MaxValue, (i, state) =>
             {
                 BigInteger x;
                 
-                byte[] myBytes = new Byte[_bytes];
+                byte[] myBytes = new Byte[bytes];
                 _rng.GetBytes(myBytes);
                 x = BigInteger.Abs(new BigInteger(myBytes));
 
@@ -217,6 +218,11 @@ namespace PrimeGenerator
         ///         <term>2</term>
         ///         <description>The provided argument(s) were not integers</description>
         ///     </item>
+        ///     <item>
+        ///         <term>3</term>
+        ///         <description>The provided bit length was not larger than 32 or it was not a multiple of 8
+        ///         </description>
+        ///     </item>
         /// </list>
         /// </summary>
         /// <param name="args">Arguments as they are defined in <see cref="HelpMsg"/></param>
@@ -234,6 +240,11 @@ namespace PrimeGenerator
             {
                 bits = int.Parse(args[0]);
                 count = args.Length > 1 ? int.Parse(args[1]) : 1;
+                if (bits % 8 != 0 || bits < 32)
+                {
+                    HelpMsg();
+                    Environment.Exit(3);
+                }
             }
             catch
             {
